@@ -82,7 +82,7 @@ echo "Registrating Wildfly as service..."
 # if should use systemd
 
     # Script from $WILDFLY_DIR/docs/contrib/scripts/systemd/launch.sh didn't work for me
-    cp $WILDFLY_DIR/docs/contrib/scripts/systemd/launch.sh  %{buildroot}$WILDFLY_DIR/bin/
+    cp %{buildroot}$WILDFLY_DIR/docs/contrib/scripts/systemd/launch.sh  $WILDFLY_DIR/bin/
     cat > $WILDFLY_DIR/bin/launch.sh << "EOF"
 
 
