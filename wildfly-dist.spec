@@ -11,7 +11,7 @@ ExclusiveArch:	x86_64 i686
 ExclusiveOS:	Linux
 
 Requires(pre):	shadow-utils
-Requires:	java >= 1.7.0
+Requires:	java >= 1.8.0
 Requires:	/etc/init.d/functions
 Provides:	wildfly
 
