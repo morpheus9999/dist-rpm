@@ -84,6 +84,8 @@ alternatives --remove wildfly /opt/wildfly
 
 
 %changelog
+* Tue Dec 27 2016 Jorge Figueira <morpheus9999@gmail.com>
+- bump to 10.0.0.Final
 * Tue Jul 21 2015 Charles Simpson <csimpson@gmail.com>
 - bump to 9.0.0.Final
 
