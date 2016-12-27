@@ -80,29 +80,24 @@ WILDFLY_SHUTDOWN_TIMEOUT=30
 
 echo "Registrating Wildfly as service..."
 # if should use systemd
-if [ -x /bin/systemctl ]; then
+
     # Script from $WILDFLY_DIR/docs/contrib/scripts/systemd/launch.sh didn't work for me
-    cp $WILDFLY_DIR/docs/contrib/scripts/systemd/launch.sh  $WILDFLY_DIR/bin/
+    cp $WILDFLY_DIR/docs/contrib/scripts/systemd/launch.sh  %{buildroot}$WILDFLY_DIR/bin/
     cat > $WILDFLY_DIR/bin/launch.sh << "EOF"
-#!/bin/sh
 
-if [ "x$WILDFLY_HOME" = "x" ]; then
+
+
     WILDFLY_HOME="/opt/wildfly"
-fi
 
-if [ "x$1" = "xdomain" ]; then
-    echo 'Starting Wildfly in domain mode.'
-    $WILDFLY_HOME/bin/domain.sh -c $2 -b $3
-    #>> /var/log/$WILDFLY_SERVICE/server-`date +%Y-%m-%d`.log
-else
+
+
     echo 'Starting Wildfly in standalone mode.'
     $WILDFLY_HOME/bin/standalone.sh -c $2 -b $3
     #>> /var/log/$WILDFLY_SERVICE/server-`date +%Y-%m-%d`.log
-fi
-EOF
+
     # $WILDFLY_HOME is not visible here
-    sed -i -e 's,WILDFLY_HOME=.*,WILDFLY_HOME='$WILDFLY_DIR',g' $WILDFLY_DIR/bin/launch.sh
-    #sed -i -e 's,$WILDFLY_SERVICE,'$WILDFLY_SERVICE',g' $WILDFLY_DIR/bin/launch.sh
+    sed -i -e 's,WILDFLY_HOME=.*,WILDFLY_HOME='$WILDFLY_DIR',g' %{buildroot}$WILDFLY_DIR/bin/launch.sh
+    #sed -i -e 's,$WILDFLY_SERVICE,'$WILDFLY_SERVICE',g' %{buildroot}$WILDFLY_DIR/bin/launch.sh
     chmod +x $WILDFLY_DIR/bin/launch.sh
     
     cp $WILDFLY_DIR/docs/contrib/scripts/systemd/wildfly.service %{buildroot}/etc/systemd/system/$WILDFLY_SERVICE.service
@@ -114,39 +109,13 @@ EOF
     sed -i -e 's,ExecStart=.*,ExecStart='$WILDFLY_DIR'/bin/launch.sh $WILDFLY_MODE $WILDFLY_CONFIG $WILDFLY_BIND,g' %{buildroot}/etc/systemd/system/$WILDFLY_SERVICE.service
     systemctl daemon-reload
     #systemctl enable $WILDFLY_SERVICE.service
-fi
+
 
 WILDFLY_USER=${WILDFLY_USER}
 WILDFLY_DIR=${WILDFLY_DIR}
 
-case "$1" in
-start)
-echo "Starting ${WILDFLY_FILENAME}..."
-start-stop-daemon --start --background --chuid $WILDFLY_USER --exec $WILDFLY_DIR/bin/standalone.sh
-exit $?
-;;
-stop)
-echo "Stopping ${WILDFLY_FILENAME}..."
 
-start-stop-daemon --start --quiet --background --chuid $WILDFLY_USER --exec $WILDFLY_DIR/bin/jboss-cli.sh -- --connect command=:shutdown
-exit $?
-;;
-log)
-echo "Showing server.log..."
-tail -500f $WILDFLY_DIR/standalone/log/server.log
-;;
-*)
-echo "Usage: /etc/init.d/wildfly {start|stop}"
-exit 1
-;;
-esac
-exit 0
-EOF
-sed -i -e 's,${WILDFLY_USER},'$WILDFLY_USER',g; s,${WILDFLY_FILENAME},'$WILDFLY_FILENAME',g; s,${WILDFLY_SERVICE},'$WILDFLY_SERVICE',g; s,${WILDFLY_DIR},'$WILDFLY_DIR',g' %{buildroot}/etc/init.d/$WILDFLY_SERVICE
-chmod 755 %{buildroot}/etc/init.d/$WILDFLY_SERVICE
-fi
 
-if [ ! -z "$WILDFLY_SERVICE_CONF" ]; then
     echo "Configuring service..."
     echo JBOSS_HOME=\"$WILDFLY_DIR\" > %{buildroot}$WILDFLY_SERVICE_CONF
     echo JBOSS_USER=\"$WILDFLY_USER\" >> %{buildroot}$WILDFLY_SERVICE_CONF
@@ -157,7 +126,7 @@ if [ ! -z "$WILDFLY_SERVICE_CONF" ]; then
     echo WILDFLY_CONFIG=$WILDFLY_MODE.xml >> %{buildroot}$WILDFLY_SERVICE_CONF
     echo WILDFLY_MODE=$WILDFLY_MODE >> %{buildroot}$WILDFLY_SERVICE_CONF
     echo WILDFLY_BIND=0.0.0.0 >> %{buildroot}$WILDFLY_SERVICE_CONF
-fi
+
 
 echo "Configuring application server..."
 sed -i -e 's,<deployment-scanner path="deployments" relative-to="jboss.server.base.dir" scan-interval="5000",<deployment-scanner path="deployments" relative-to="jboss.server.base.dir" scan-interval="5000" deployment-timeout="'$WILDFLY_STARTUP_TIMEOUT'",g' %{buildroot}$WILDFLY_DIR/$WILDFLY_MODE/configuration/$WILDFLY_MODE.xml
@@ -167,9 +136,10 @@ sed -i -e 's,<inet-address value="${jboss.bind.address:127.0.0.1}"/>,<any-addres
 #sed -i -e 's,<socket-binding name="https" port="${jboss.https.port:8443}"/>,<socket-binding name="https" port="${jboss.https.port:28443}"/>,g' $WILDFLY_DIR/$WILDFLY_MODE/configuration/$WILDFLY_MODE.xml
 #sed -i -e 's,<socket-binding name="osgi-http" interface="management" port="8090"/>,<socket-binding name="osgi-http" interface="management" port="28090"/>,g' $WILDFLY_DIR/$WILDFLY_MODE/configuration/$WILDFLY_MODE.xml
 
-[ -x /bin/systemctl ] && systemctl start $WILDFLY_SERVICE || service $WILDFLY_SERVICE start
+
 
 echo "Done."
+
 # The init script doesn't default the user and crashes. Might as well set the
 # home dir since we know what it is.
 sed -e 's/# JBOSS_HOME/JBOSS_HOME/' -i %{buildroot}/etc/default/wildfly.conf
