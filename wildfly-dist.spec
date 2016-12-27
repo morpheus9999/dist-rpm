@@ -1,5 +1,5 @@
 Name:		wildfly-dist
-Version:	9.0.0.Final
+Version:	10.0.0.Final
 Release:	1%{?dist}
 Summary:	WildFly Application Server
 Group:		System Environment/Daemons
